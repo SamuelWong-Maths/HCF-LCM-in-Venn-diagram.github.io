@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HCF & LCM in Venn diagram</title>
+    <style>
+        :root {
+            --color-a-only: #3182ce;
+            --color-a-bg: rgba(66, 153, 225, 0.15);
+            --color-b-only: #e53e3e;
+            --color-b-bg: rgba(245, 101, 101, 0.15);
+            --color-inter: #805ad5;
+            --color-inter-bg: rgba(128, 90, 213, 0.18);
+            --text-on-dark: white;
+            --main-bg: #f7fafc;
+            --panel-bg: white;
+            --lcm-color: #ed8936;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--main-bg);
+            margin: 0;
+            padding: 20px;
+            color: #2d3748;
+        }
+
+        .wrapper {
+            max-width: 1260px;
+            margin: 0 auto;
+            background: var(--panel-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a365d;
+            margin-top: 0;
+            font-size: 1.9em;
+        }
+
+        p.desc {
+            text-align: center;
+            color: #4a5568;
+            margin-top: -10px;
+            margin-bottom: 25px;
+        }
+
+        .input-panel {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+
+        input {
+            width: 90px;
+            padding: 10px;
+            font-size: 1.2em;
+            border: 2px solid #cbd5e0;
+            border-radius: 6px;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        button {
+            background: #3182ce;
+            color: white;
+            border: none;
+            padding: 11px 22px;
+            font-size: 1em;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #2b6cb0;
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .grid-steps {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .factor-card {
+            background: var(--main-bg);
+            border: 2px dashed #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 88px;
+        }
+
+        .card-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #4a5568;
+        }
+
+        .setup-bubble-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 40px;
+        }
+
+        .stage-scroll {
+            overflow-x: auto;
+            padding-bottom: 6px;
+        }
+
+        .venn-stage {
+            position: relative;
+            width: 1180px;
+            height: 460px;
+            margin: 20px auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .venn-circle {
+            position: absolute;
+            width: 340px;
+            height: 340px;
+            border-radius: 50%;
+            top: 65px;
+            pointer-events: none;
+            transition: all 0.25s ease;
+        }
+
+        #circle-A {
+            background: var(--color-a-bg);
+            border: 4px solid var(--color-a-only);
+            left: 280px;
+        }
+
+        #circle-B {
+            background: var(--color-b-bg);
+            border: 4px solid var(--color-b-only);
+            left: 500px;
+        }
+
+        .circle-label {
+            position: absolute;
+            top: -38px;
+            font-weight: bold;
+            font-size: 1.08em;
+            white-space: nowrap;
+        }
+
+        #lbl-A {
+            left: 12px;
+            color: var(--color-a-only);
+        }
+
+        #lbl-B {
+            right: 12px;
+            color: var(--color-b-only);
+            text-align: right;
+        }
+
+        #intersection-highlight {
+            position: absolute;
+            top: 92px;
+            left: 545px;
+            width: 90px;
+            height: 285px;
+            border-radius: 50px;
+            background: rgba(128, 90, 213, 0.22);
+            box-shadow: 0 0 0 8px rgba(128, 90, 213, 0.10);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.25s ease;
+        }
+
+        .bubble-space {
+            position: absolute;
+            width: 1180px;
+            height: 460px;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .factor-bubble {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.95em;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition:
+                left 1.05s cubic-bezier(0.25, 1, 0.5, 1),
+                top 1.05s cubic-bezier(0.25, 1, 0.5, 1),
+                transform 0.35s ease-out,
+                background 0.3s ease,
+                border-color 0.3s ease,
+                color 0.3s ease,
+                opacity 0.3s ease,
+                box-shadow 0.3s ease;
+            z-index: 10;
+        }
+
+        .only-a-bubble {
+            background: white;
+            border: 3px solid var(--color-a-only);
+            color: var(--color-a-only);
+        }
+
+        .only-b-bubble {
+            background: white;
+            border: 3px solid var(--color-b-only);
+            color: var(--color-b-only);
+        }
+
+        .setup-bubble {
+            opacity: 1;
+            transition: none;
+            position: relative !important;
+            top: 0 !important;
+            left: 0 !important;
+            margin: 4px;
+        }
+
+        .combined-state {
+            background: var(--color-inter) !important;
+            border-color: #4c1d95 !important;
+            color: var(--text-on-dark) !important;
+            z-index: 20;
+            transform: scale(1.1);
+        }
+
+        .summary-panel {
+            background: #ebf8ff;
+            border: 2px solid #bee3f8;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        .summary-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #2b6cb0;
+            text-align: center;
+        }
+
+        .math-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 26px;
+            flex-wrap: wrap;
+            font-family: monospace;
+            font-size: 1.18em;
+        }
+
+        .math-box {
+            text-align: center;
+            border-radius: 16px;
+            padding: 14px 18px;
+            background: white;
+            min-width: 290px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .math-box.interactive {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .math-box.interactive:hover,
+        .math-box.interactive.active {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+        }
+
+        #hcf-box {
+            border: 2px solid var(--color-inter);
+        }
+
+        #lcm-box {
+            border: 2px solid var(--lcm-color);
+        }
+
+        .result-line {
+            margin-top: 6px;
+            font-weight: bold;
+        }
+
+        .venn-stage.highlight-hcf #intersection-highlight {
+            opacity: 1;
+        }
+
+        .venn-stage.highlight-hcf .combined-state {
+            box-shadow: 0 0 0 8px rgba(128, 90, 213, 0.18), 0 8px 16px rgba(76, 29, 149, 0.14);
+        }
+
+        .venn-stage.highlight-lcm #circle-A {
+            background: rgba(66, 153, 225, 0.28);
+            border-width: 6px;
+            box-shadow: 0 0 0 10px rgba(49,130,206,0.10);
+        }
+
+        .venn-stage.highlight-lcm #circle-B {
+            background: rgba(245, 101, 101, 0.28);
+            border-width: 6px;
+            box-shadow: 0 0 0 10px rgba(229,62,62,0.10);
+        }
+
+        .venn-stage.highlight-lcm #intersection-highlight {
+            opacity: 0;
+        }
+
+        .venn-stage.highlight-lcm .factor-bubble {
+            box-shadow: 0 0 0 6px rgba(237,137,54,0.16), 0 6px 14px rgba(0,0,0,0.10);
+        }
+
+        @media (max-width: 800px) {
+            .grid-steps {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <h1>HCF & LCM in Venn diagram</h1>
+    <p class="desc">Enter two numbers to watch how HCF & LCM work in Venn diagram.</p>
+
+    <div class="input-panel">
+        <label style="font-weight: bold;">Number 1 (A):</label>
+        <input type="number" id="numA" value="12" min="2" max="5000">
+        <label style="font-weight: bold;">Number 2 (B):</label>
+        <input type="number" id="numB" value="18" min="2" max="5000">
+        <button id="btn-factor" onclick="setupStage()">1. Prime Factorize</button>
+        <button id="btn-venn" onclick="startVennAnimation()" disabled>2. Move to Venn Diagram</button>
+    </div>
+
+    <div class="grid-steps">
+        <div class="factor-card">
+            <div class="card-title">Factors of A</div>
+            <div id="setup-containerA" class="setup-bubble-container"></div>
+        </div>
+        <div class="factor-card">
+            <div class="card-title">Factors of B</div>
+            <div id="setup-containerB" class="setup-bubble-container"></div>
+        </div>
+    </div>
+
+    <div class="stage-scroll">
+        <div class="venn-stage" id="venn-stage">
+            <div id="circle-A" class="venn-circle">
+                <span class="circle-label" id="lbl-A">Number A</span>
+            </div>
+            <div id="circle-B" class="venn-circle">
+                <span class="circle-label" id="lbl-B">Number B</span>
+            </div>
+            <div id="intersection-highlight"></div>
+            <div id="bubble-container" class="bubble-space"></div>
+        </div>
+    </div>
+
+    <div class="summary-panel" id="summary">
+        <div class="summary-title">Mathematical Analysis</div>
+        <div class="math-wrapper">
+            <div class="math-box interactive" id="hcf-box">
+                Common region<br>
+                <div class="result-line" style="color: var(--color-inter);">H.C.F. = <span id="hcf-val">?</span></div>
+            </div>
+            <div class="math-box interactive" id="lcm-box">
+                Union region<br>
+                <div class="result-line" style="color: var(--lcm-color);">L.C.M. = <span id="lcm-val">?</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let factorsA_Objects = [];
+    let factorsB_Objects = [];
+    let intersectionPairs = [];
+
+    const START_Y_PAIR = 18;
+    const START_Y_UNIQUE = 58;
+    const START_A_X = 70;
+    const START_B_X = 860;
+    const START_SPACING = 38;
+
+    const BUBBLE_SIZE = 30;
+    const INTERSECTION_CENTER_X = 560;
+    const MEET_POINT_X = INTERSECTION_CENTER_X - BUBBLE_SIZE / 2;
+    const MEET_POINT_Y = 18;
+
+    function getSortedPrimeFactors(num) {
+        const factors = [];
+        let d = 2;
+        let n = num;
+        while (n > 1) {
+            while (n % d === 0) {
+                factors.push(d);
+                n /= d;
+            }
+            d++;
+            if (d * d > n && n > 1) {
+                factors.push(n);
+                break;
+            }
+        }
+        return factors.sort((a, b) => a - b);
+    }
+
+    function analyzeFactors(factorsA, factorsB) {
+        const usedB = new Array(factorsB.length).fill(false);
+        const intersection = [];
+        const uniqueA = [];
+
+        factorsA.forEach(aVal => {
+            const matchIndex = factorsB.findIndex((bVal, idx) => bVal === aVal && !usedB[idx]);
+            if (matchIndex !== -1) {
+                usedB[matchIndex] = true;
+                intersection.push({ val: aVal });
+            } else {
+                uniqueA.push({ val: aVal });
+            }
+        });
+
+        const uniqueB = factorsB
+            .map((val, idx) => ({ val, idx }))
+            .filter(item => !usedB[item.idx])
+            .map(item => ({ val: item.val }));
+
+        return { intersection, uniqueA, uniqueB };
+    }
+
+    function setupStage() {
+        const valA = parseInt(document.getElementById('numA').value);
+        const valB = parseInt(document.getElementById('numB').value);
+
+        if (isNaN(valA) || isNaN(valB) || valA < 2 || valB < 2 || valA > 5000 || valB > 5000) {
+            alert("Please enter valid integers between 2 and 5000.");
+            return;
+        }
+
+        const setupA = document.getElementById('setup-containerA');
+        const setupB = document.getElementById('setup-containerB');
+        const bubbleContainer = document.getElementById('bubble-container');
+        const summary = document.getElementById('summary');
+        const vennStage = document.getElementById('venn-stage');
+
+        setupA.innerHTML = '';
+        setupB.innerHTML = '';
+        bubbleContainer.innerHTML = '';
+
+        summary.style.display = 'none';
+        summary.style.opacity = '0';
+
+        vennStage.classList.remove('highlight-hcf', 'highlight-lcm');
+        document.getElementById('hcf-box').classList.remove('active');
+        document.getElementById('lcm-box').classList.remove('active');
+
+        document.getElementById('btn-venn').disabled = true;
+        document.getElementById('lbl-A').innerText = `Number A (${valA})`;
+        document.getElementById('lbl-B').innerText = `Number B (${valB})`;
+
+        const factorsA = getSortedPrimeFactors(valA);
+        const factorsB = getSortedPrimeFactors(valB);
+
+        factorsA.forEach(f => setupA.appendChild(createStaticBubble(f, 'only-a-bubble')));
+        factorsB.forEach(f => setupB.appendChild(createStaticBubble(f, 'only-b-bubble')));
+
+        const { intersection, uniqueA, uniqueB } = analyzeFactors(factorsA, factorsB);
+        updateMathAnalysis(intersection, uniqueA, uniqueB);
+
+        intersection.forEach((pair, i) => {
+            pair.domA = createAnimationBubble(pair.val, 'only-a-bubble', START_A_X + i * START_SPACING, START_Y_PAIR);
+            pair.domB = createAnimationBubble(pair.val, 'only-b-bubble', START_B_X + i * START_SPACING, START_Y_PAIR);
+        });
+
+        uniqueA.forEach((obj, i) => {
+            obj.dom = createAnimationBubble(obj.val, 'only-a-bubble', START_A_X + i * START_SPACING, START_Y_UNIQUE);
+        });
+
+        uniqueB.forEach((obj, i) => {
+            obj.dom = createAnimationBubble(obj.val, 'only-b-bubble', START_B_X + i * START_SPACING, START_Y_UNIQUE);
+        });
+
+        factorsA_Objects = uniqueA;
+        factorsB_Objects = uniqueB;
+        intersectionPairs = intersection;
+
+        document.getElementById('btn-venn').disabled = false;
+    }
+
+    function updateMathAnalysis(intersection, uniqueA, uniqueB) {
+        const intersectionVals = intersection.map(p => p.val);
+        const unionVals = [
+            ...uniqueA.map(v => v.val),
+            ...intersectionVals,
+            ...uniqueB.map(v => v.val)
+        ].sort((a, b) => a - b);
+
+        const hcfProduct = intersectionVals.length ? intersectionVals.reduce((p, c) => p * c, 1) : 1;
+        const lcmProduct = unionVals.length ? unionVals.reduce((p, c) => p * c, 1) : 1;
+
+        document.getElementById('hcf-val').innerHTML =
+            intersectionVals.length
+                ? `${intersectionVals.join(" × ")} = <strong>${hcfProduct}</strong>`
+                : `<strong>1</strong>`;
+
+        document.getElementById('lcm-val').innerHTML =
+            `${unionVals.join(" × ")} = <strong>${lcmProduct}</strong>`;
+    }
+
+    function createStaticBubble(val, colorClass) {
+        const bubble = document.createElement('div');
+        bubble.className = `factor-bubble ${colorClass} setup-bubble`;
+        bubble.innerText = val;
+        return bubble;
+    }
+
+    function createAnimationBubble(val, colorClass, startX, startY) {
+        const bubble = document.createElement('div');
+        bubble.className = `factor-bubble ${colorClass}`;
+        bubble.innerText = val;
+        bubble.style.left = `${startX}px`;
+        bubble.style.top = `${startY}px`;
+        document.getElementById('bubble-container').appendChild(bubble);
+        bubble.getBoundingClientRect();
+        return bubble;
+    }
+
+    function getIntersectionTargets(count) {
+        if (count === 0) return [];
+
+        const bubbleSize = 30;
+        const intersectionCenterX = 560;
+        const x = intersectionCenterX - bubbleSize / 2;
+
+        const topSafe = 118;
+        const bottomSafe = 352;
+        const centerY = (topSafe + bottomSafe) / 2;
+        const maxGap = 38;
+
+        const targets = [];
+
+        if (count === 1) {
+            targets.push({ x, y: centerY - bubbleSize / 2 });
+            return targets;
+        }
+
+        const usableHeight = bottomSafe - topSafe;
+        const gap = Math.min(maxGap, usableHeight / (count - 1));
+        const totalHeight = (count - 1) * gap;
+        const startY = centerY - totalHeight / 2;
+
+        for (let i = 0; i < count; i++) {
+            targets.push({
+                x: x,
+                y: startY + i * gap
+            });
+        }
+
+        return targets;
+    }
+
+    function getExclusiveTargets(side, count) {
+        const baseA = [
+            { x: 330, y: 150 }, { x: 385, y: 135 }, { x: 440, y: 150 },
+            { x: 315, y: 205 }, { x: 370, y: 205 }, { x: 425, y: 205 },
+            { x: 305, y: 265 }, { x: 360, y: 270 }, { x: 415, y: 270 },
+            { x: 325, y: 325 }, { x: 380, y: 330 }, { x: 435, y: 325 }
+        ];
+
+        const baseB = [
+            { x: 635, y: 150 }, { x: 690, y: 135 }, { x: 745, y: 150 },
+            { x: 620, y: 205 }, { x: 675, y: 205 }, { x: 730, y: 205 },
+            { x: 610, y: 265 }, { x: 665, y: 270 }, { x: 720, y: 270 },
+            { x: 625, y: 325 }, { x: 680, y: 330 }, { x: 735, y: 325 }
+        ];
+
+        const source = side === 'A' ? baseA : baseB;
+        return source.slice(0, count);
+    }
+
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    async function startVennAnimation() {
+        document.getElementById('btn-factor').disabled = true;
+        document.getElementById('btn-venn').disabled = true;
+
+        const interTargets = getIntersectionTargets(intersectionPairs.length);
+
+        for (let i = 0; i < intersectionPairs.length; i++) {
+            const pair = intersectionPairs[i];
+
+            await Promise.all([
+                animateBubbleTo(pair.domA, MEET_POINT_X, MEET_POINT_Y),
+                animateBubbleTo(pair.domB, MEET_POINT_X, MEET_POINT_Y)
+            ]);
+
+            await sleep(180);
+
+            pair.domA.classList.add('combined-state');
+            pair.domB.style.opacity = '0';
+            pair.domB.style.transform = 'scale(0.2)';
+
+            await sleep(280);
+
+            await animateBubbleTo(pair.domA, interTargets[i].x, interTargets[i].y);
+            await sleep(100);
+        }
+
+        const uniqueATargets = getExclusiveTargets('A', factorsA_Objects.length);
+        const uniqueBTargets = getExclusiveTargets('B', factorsB_Objects.length);
+
+        const movePromises = [];
+
+        factorsA_Objects.forEach((obj, i) => {
+            if (uniqueATargets[i]) {
+                movePromises.push(animateBubbleTo(obj.dom, uniqueATargets[i].x, uniqueATargets[i].y));
+            }
+        });
+
+        factorsB_Objects.forEach((obj, i) => {
+            if (uniqueBTargets[i]) {
+                movePromises.push(animateBubbleTo(obj.dom, uniqueBTargets[i].x, uniqueBTargets[i].y));
+            }
+        });
+
+        await Promise.all(movePromises);
+
+        await sleep(250);
+
+        const summary = document.getElementById('summary');
+        summary.style.display = 'block';
+        summary.getBoundingClientRect();
+        summary.style.opacity = '1';
+
+        document.getElementById('btn-factor').disabled = false;
+        document.getElementById('btn-venn').disabled = false;
+    }
+
+    function animateBubbleTo(bubbleDOM, endX, endY) {
+        return new Promise((resolve) => {
+            const currentX = parseFloat(bubbleDOM.style.left);
+            const currentY = parseFloat(bubbleDOM.style.top);
+
+            if (currentX === endX && currentY === endY) {
+                resolve();
+                return;
+            }
+
+            let finished = false;
+
+            const cleanup = () => {
+                if (finished) return;
+                finished = true;
+                bubbleDOM.removeEventListener('transitionend', handleTransitionEnd);
+                clearTimeout(fallbackTimer);
+                resolve();
+            };
+
+            const handleTransitionEnd = (e) => {
+                if (e.propertyName === 'left') cleanup();
+            };
+
+            const fallbackTimer = setTimeout(cleanup, 1300);
+
+            bubbleDOM.addEventListener('transitionend', handleTransitionEnd);
+            bubbleDOM.style.left = `${endX}px`;
+            bubbleDOM.style.top = `${endY}px`;
+        });
+    }
+
+    function initHighlightInteractions() {
+        const vennStage = document.getElementById('venn-stage');
+        const hcfBox = document.getElementById('hcf-box');
+        const lcmBox = document.getElementById('lcm-box');
+
+        let lockedMode = '';
+
+        function applyHighlight(mode) {
+            vennStage.classList.remove('highlight-hcf', 'highlight-lcm');
+            hcfBox.classList.remove('active');
+            lcmBox.classList.remove('active');
+
+            if (mode === 'highlight-hcf') {
+                vennStage.classList.add('highlight-hcf');
+                hcfBox.classList.add('active');
+            }
+
+            if (mode === 'highlight-lcm') {
+                vennStage.classList.add('highlight-lcm');
+                lcmBox.classList.add('active');
+            }
+        }
+
+        function attachBox(box, mode) {
+            box.addEventListener('pointerenter', () => {
+                if (!lockedMode) applyHighlight(mode);
+            });
+
+            box.addEventListener('pointerleave', () => {
+                if (!lockedMode) applyHighlight('');
+            });
+
+            box.addEventListener('click', (e) => {
+                e.stopPropagation();
+                lockedMode = (lockedMode === mode) ? '' : mode;
+                applyHighlight(lockedMode);
+            });
+        }
+
+        attachBox(hcfBox, 'highlight-hcf');
+        attachBox(lcmBox, 'highlight-lcm');
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.math-box')) {
+                lockedMode = '';
+                applyHighlight('');
+            }
+        });
+    }
+
+    initHighlightInteractions();
+</script>
+</body>
+</html>
